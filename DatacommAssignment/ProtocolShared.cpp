@@ -15,47 +15,65 @@ Protocol::~Protocol() {
 
 }
 
-//Carson
-void Protocol::sendMessage(string message, bool priority = false) {
-	//Figure out why it wont append EOT
-	message.append("" + SOH);
-	size_t i = 0;
-	priority = priority;
-	cout << message << endl;
-	while (i < message.length()) {
-		if (message.length() - i <= 512)
-			messagesToSend.push_back(message.substr(i, 512));
-		else
-			messagesToSend.push_back(message.substr(i, message.length() - i));
-		i += 512;
+char* Protocol::readNext(int timeout) {
+	if (!SetCommMask(handle, EV_RXFLAG))
+		return 0;
+	osStatus.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL)
+		if (overlapStatus.hEvent == NULL)
+			return 0;
+
+	if (!fWaitingonStat) {
+		if (WaitCommEvent(hComm, &commEvent, &overlapStatus)) {
+			if ((dwEvent & EV_RXCHAR) && cs.cbInQue)
+				if (ReadFile(handle, inbuff, cs.cbInQue, &nBytesRead, NULL))
+					if (nBytesRead == 1 && (inbuff[0] == ENQ || inbuff[0] == ENQP))
+						write(priority ? ACKP : ACK);
+		}
+
+
 	}
-}
 
-
-void Protocol::sendMessage(iostream filestream, bool priority = false) {
-
-}
-
-//Carson
-void Protocol::write(string message) {
-	unsigned char buffer[516];
-	size_t i;
-	for (i = 0; i < message.length() || i < 516; i++) {
-		buffer[i] = message[i];
+	//Carson
+	void Protocol::sendMessage(string message, bool priority = false) {
+		//Figure out why it wont append EOT
+		message.append("" + SOH);
+		size_t i = 0;
+		priority = priority;
+		cout << message << endl;
+		while (i < message.length()) {
+			if (message.length() - i <= 512)
+				messagesToSend.push_back(message.substr(i, 512));
+			else
+				messagesToSend.push_back(message.substr(i, message.length() - i));
+			i += 512;
+		}
 	}
-	WriteFile(handle, buffer, i, 0, &OVERLAPPED());
-}
 
-//Carson
-void Protocol::write(char message) {
-	unsigned char buffer[1] = { message };
-	WriteFile(handle, buffer, 1, 0, &OVERLAPPED());
-}
 
-void Protocol::idle() {
+	void Protocol::sendMessage(iostream filestream, bool priority = false) {
 
-}
+	}
 
-void Protocol::wait() {
+	//Carson
+	void Protocol::write(string message) {
+		unsigned char buffer[516];
+		size_t i;
+		for (i = 0; i < message.length() || i < 516; i++) {
+			buffer[i] = message[i];
+		}
+		WriteFile(handle, buffer, i, 0, &OVERLAPPED());
+	}
 
-}
+	//Carson
+	void Protocol::write(char message) {
+		unsigned char buffer[1] = { message };
+		WriteFile(handle, buffer, 1, 0, &OVERLAPPED());
+	}
+
+	void Protocol::idle() {
+
+	}
+
+	void Protocol::wait() {
+
+	}
