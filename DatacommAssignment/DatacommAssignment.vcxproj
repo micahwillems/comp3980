@@ -20,8 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Protocol.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="ProtocolReceiver.cpp" />
     <ClCompile Include="ProtocolSender.cpp" />
     <ClCompile Include="ProtocolShared.cpp" />
