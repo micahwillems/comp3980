@@ -1,11 +1,13 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <stdio.h>
+#include <string.h>
 #include "Main.h"
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static TCHAR Name[] = TEXT("Assign4");
-HWND hwndMain, hwndButtonBrowse, hwndButtonConnect, hwndDisplayCont, hwndDisplayStats;
+HWND hwndMain, hwndButtonSend, hwndButtonConnect, hwndDisplayMain,
+	hwndDisplayStats, hwndButtonHelp, hwndChkBoxPriority;
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 	LPSTR lspszCmdParam, int nCmdShow)
@@ -13,27 +15,25 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 	MSG Msg;
 	WNDCLASSEX Wcl;
 
-	// Define a Window class
 	Wcl.cbSize = sizeof(WNDCLASSEX);
-	Wcl.style = 0; // default style
-	Wcl.hIcon = LoadIcon(NULL, IDI_APPLICATION); // large icon 
-	Wcl.hIconSm = NULL; // use small version of large icon
-	Wcl.hCursor = LoadCursor(NULL, IDC_ARROW);  // cursor style
+	Wcl.style = 0; 
+	Wcl.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	Wcl.hIconSm = NULL; 
+	Wcl.hCursor = LoadCursor(NULL, IDC_ARROW);  
 
-	Wcl.lpfnWndProc = WndProc; // window function
-	Wcl.hInstance = hInst; // handle to this instance
-	Wcl.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH); //white background
-	Wcl.lpszClassName = Name; // window class name
+	Wcl.lpfnWndProc = WndProc;
+	Wcl.hInstance = hInst;  
+	Wcl.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH); 
+	Wcl.lpszClassName = Name;
 
-	Wcl.lpszMenuName = NULL; // no class menu 
-	Wcl.cbClsExtra = 0;      // no extra memory needed
+	Wcl.lpszMenuName = NULL; 
+	Wcl.cbClsExtra = 0;      
 	Wcl.cbWndExtra = 0;
 
-	// Register the class
 	if (!RegisterClassEx(&Wcl))
 		return 0;
 
-	// Create the main window
+	// The main application window
 	hwndMain = CreateWindow(
 		Name, 
 		Name, 
@@ -48,12 +48,11 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 		NULL 
 		);
 
-	// Display the window
 	ShowWindow(hwndMain, nCmdShow);
 	UpdateWindow(hwndMain);
 	
-	// creates an "EDIT" window or edit text box
-	hwndDisplayCont = CreateWindowEx(0,
+	// The main textbox area for showing received data (content)
+	hwndDisplayMain = CreateWindowEx(0,
 		TEXT("EDIT"),
 		NULL,
 		WS_CHILD | WS_VISIBLE | ES_MULTILINE | WS_VSCROLL | ES_READONLY,
@@ -66,33 +65,63 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 		(HINSTANCE)GetWindowLong(hwndMain, GWL_HINSTANCE),
 		NULL);
 
-	hwndButtonBrowse = CreateWindow(
-		TEXT("BUTTON"),  // Predefined class; Unicode assumed 
-		TEXT("BROWSE"),      // Button text 
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
-		550,         // x position 
-		60,         // y position 
-		90,        // Button width
-		25,        // Button height
-		hwndMain,     // Parent window
-		NULL,       // No menu.
+	// Help button for displaying help dialog
+	hwndButtonHelp = CreateWindow(
+		TEXT("BUTTON"),  
+		TEXT("?"),      
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  
+		950,      
+		10,       
+		25,       
+		25,       
+		hwndMain, 
+		NULL,     
 		hInst,
-		NULL);      // Pointer not needed.
+		NULL);    
+	
+	// Send file button which will load a standard open file dialog
+	hwndButtonSend = CreateWindow(
+		TEXT("BUTTON"),  
+		TEXT("SEND FILE"),  
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  
+		550,       
+		60,        
+		90,        
+		25,        
+		hwndMain,  
+		NULL,      
+		hInst,
+		NULL);
 
+	// Connect/disconnect button
 	hwndButtonConnect = CreateWindow(
-		TEXT("BUTTON"),  // Predefined class; Unicode assumed 
-		TEXT("CONNECT"),      // Button text 
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
-		550,         // x position 
-		110,         // y position 
-		100,        // Button width
-		25,        // Button height
-		hwndMain,     // Parent window
-		NULL,       // No menu.
+		TEXT("BUTTON"),  
+		TEXT("CONNECT"),     
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 
+		550,         
+		100,         
+		100,        
+		25,        
+		hwndMain,     
+		NULL,       
 		hInst,
-		NULL);      // Pointer not needed.
+		NULL);      
 
-	// creates an "EDIT" window or edit text box
+	// Checkbox for priority mode
+	hwndChkBoxPriority = CreateWindow(
+		TEXT("BUTTON"),  
+		TEXT("PRIORITY"),      
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX ,
+		550,         
+		140,         
+		100,        
+		25,       
+		hwndMain,     
+		NULL,       
+		hInst,
+		NULL);      
+
+	// Text edit box for displaying statistics about the packet
 	hwndDisplayStats = CreateWindowEx(0,
 		TEXT("EDIT"),
 		NULL,
@@ -106,11 +135,10 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 		(HINSTANCE)GetWindowLong(hwndMain, GWL_HINSTANCE),
 		NULL);
 
-	// Create the message loop
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
-		TranslateMessage(&Msg); // translate keybpard messages
-		DispatchMessage(&Msg); // dispatch message and return control to windows
+		TranslateMessage(&Msg);
+		DispatchMessage(&Msg); 
 	}
 
 	return Msg.wParam;
@@ -122,27 +150,51 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 	HDC hdc;
 	PAINTSTRUCT paintstruct;
 	TEXTMETRIC tm;
-	SIZE size;
-	char str[255];	//output buffer
+	char str[255];	
 
 	switch (Message)
 	{
 	case WM_CTLCOLORSTATIC:
-		if ((HWND)lParam == hwndDisplayStats) {
-			SetBkColor((HDC)wParam, RGB(255, 255, 255));
-			return (LRESULT)GetStockObject(WHITE_BRUSH);
+		SetBkColor((HDC)wParam, RGB(255, 255, 255));
+		return (LRESULT)GetStockObject(WHITE_BRUSH);
+		break;
+	case WM_COMMAND:
+		if ((HWND)lParam == hwndButtonHelp) {
+			// ****Help Menu/Dialog Button Clicked*****************************************************
+		}
+		else if ((HWND)lParam == hwndButtonSend) {
+			// ***********Send File Button Clicked*****************************************************
+		}
+		else if ((HWND)lParam == hwndButtonConnect) {
+			char btnTxt[11];
+			SendMessage((HWND)lParam, WM_GETTEXT, 11, (LPARAM)btnTxt);
+			if (strcmp(btnTxt, "CONNECT") == 0) {
+				SendMessage((HWND)lParam, WM_SETTEXT, 0, (LPARAM)TEXT("DISCONNECT"));
+			}
+			else {
+				SendMessage((HWND)lParam, WM_SETTEXT, 0, (LPARAM)TEXT("CONNECT"));
+			}
+			// ***********Connect/Disconnect Button Clicked********************************************
+		}
+		else if ((HWND)lParam == hwndChkBoxPriority) {
+			if (SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED) {
+				// ***************Priority Mode Box Checked********************************************
+			}
+			else if (SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_UNCHECKED) {
+				// ***************Priority Mode Box Unchecked******************************************
+			}
 		}
 		break;
 	case WM_PAINT:
-		hdc = BeginPaint(hwnd, &paintstruct); // Acquire DC
-		GetTextMetrics(hdc, &tm);		// get text metrics 
+		hdc = BeginPaint(hwnd, &paintstruct);
+		GetTextMetrics(hdc, &tm);		
 		sprintf_s(str, "Packet Statistics:");
 		TextOut(hdc, 530, 200, str, strlen(str));
 		break;
-	case WM_DESTROY:		// message to terminate the program
+	case WM_DESTROY:		
 		PostQuitMessage(0);
 		break;
-	default: // Let Win32 process all other messages
+	default: 
 		return DefWindowProc(hwnd, Message, wParam, lParam);
 	}
 	return 0;
