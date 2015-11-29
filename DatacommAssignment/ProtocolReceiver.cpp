@@ -25,29 +25,11 @@ void Protocol::packetCheck(string packet) {
 }
 
 void Protocol::acknowledgePacket(string packet) {
-
+	if (DEBUG)
+		OutputDebugStringA("Acknowledge Packet");
 }
 
 void Protocol::checkPriorityStateReceiver() {
-
-}
-
-char Protocol::test() {
-	char temp = 'N';
-	if (readNextChar(10000, &temp, [this](char buffer) {
-		return (buffer == ENQ || buffer == ENQP || buffer == A);
-	}))
-		return temp;
-	return temp;
-}
-
-string Protocol::readNextPacket(int timeout) {
-	char newchar = '\0';
-	string packet = "";
-	while (newchar != EOT && packet.length() < 516) {
-		if (readNextChar(10, &newchar, [](char c) {return true; }))
-			packet += newchar;
-	}
-	OutputDebugStringA("Received Message");
-	return packet;
+	if (DEBUG)
+		OutputDebugStringA("Check Priority State (Receiver)");
 }
