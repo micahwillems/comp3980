@@ -1,40 +1,53 @@
 #include "Protocol.h"
 #include <string>
+#include <iostream>
 
 using namespace std;
 
 void Protocol::acknowledgeLine() {
 	write(priority ? ACKP : ACK);
+
+	//GOTO: WaitForPacket
+	waitForPacket();
 }
 
-//Event drivet
-void Protocol::waitForPacket(string message) {
-	BYTE inbuff[100];
-	DWORD nBytesRead, dwEvent, dwError;
-	COMSTAT cs;
-
-	/* generate event whenever a byte arives */
-	SetCommMask(handle, EV_RXCHAR);
-
-	if (WaitCommEvent(handle, &dwEvent, NULL)) {
-		ClearCommError(handle, &dwError, &cs);
-		if ((dwEvent & EV_RXCHAR) && cs.cbInQue)
-			if (ReadFile(handle, inbuff, cs.cbInQue, &nBytesRead, NULL))
-				if (nBytesRead == 1 && (inbuff[0] == ENQ || inbuff[0] == ENQP))
-					write(priority ? ACKP : ACK);
-	}
-
-	PurgeComm(handle, PURGE_RXCLEAR);
+void Protocol::waitForPacket() {
+	string packet = readNextPacket(MINI_TIMEOUT);
+	//GOTO ValidatePacket
+	packetCheck(packet);
 }
 
-void Protocol::packetCheck() {
-
+void Protocol::packetCheck(string packet) {
+	if (validatePacket(packet))
+		acknowledgePacket(packet);
+	else
+		waitForPacket();
 }
 
-void Protocol::acknowledgePacket() {
+void Protocol::acknowledgePacket(string packet) {
 
 }
 
 void Protocol::checkPriorityStateReceiver() {
 
+}
+
+char Protocol::test() {
+	char temp = 'N';
+	if (readNextChar(10000, &temp, [this](char buffer) {
+		return (buffer == ENQ || buffer == ENQP || buffer == A);
+	}))
+		return temp;
+	return temp;
+}
+
+string Protocol::readNextPacket(int timeout) {
+	char newchar = '\0';
+	string packet = "";
+	while (newchar != EOT && packet.length() < 516) {
+		if (readNextChar(10, &newchar, [](char c) {return true; }))
+			packet += newchar;
+	}
+	OutputDebugStringA("Received Message");
+	return packet;
 }

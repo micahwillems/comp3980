@@ -3,77 +3,85 @@
 #include <windows.h>
 #include <stdio.h>
 #include "Protocol.h"
+#include "Timeout.h"
+#include <thread>
 
 using namespace std;
 
 //Carson
 Protocol::Protocol() {
-	handle = CreateFile(NULL, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+	if ((handle = CreateFile(TEXT("COM1"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL)) == INVALID_HANDLE_VALUE) {
+		DWORD dwError = GetLastError();
+	}
+	timeoutThread = CreateThread(NULL, 0, startTimer, this, 0, &timeoutThreadId);
+	//thread timeoutThread(&startTimer, this);
+	//timeoutThread.detach();
+	if (timeoutThread == NULL && DEBUG)
+		OutputDebugStringA("Error creating timeout thread");
 }
 
 Protocol::~Protocol() {
 
 }
 
-char* Protocol::readNext(int timeout) {
-	if (!SetCommMask(handle, EV_RXFLAG))
-		return 0;
-	osStatus.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL)
-		if (overlapStatus.hEvent == NULL)
-			return 0;
+//Carson
+void Protocol::sendMessage(string message, bool priority = false) {
+	//Figure out why it wont append EOT
+	message.append("" + SOH);
+	size_t i = 0;
+	priority = priority;
+	cout << message << endl;
+	while (i < message.length()) {
+		if (message.length() - i <= 512)
+			messagesToSend.push_back(message.substr(i, 512));
+		else
+			messagesToSend.push_back(message.substr(i, message.length() - i));
+		i += 512;
+	}
+}
 
-	if (!fWaitingonStat) {
-		if (WaitCommEvent(hComm, &commEvent, &overlapStatus)) {
-			if ((dwEvent & EV_RXCHAR) && cs.cbInQue)
-				if (ReadFile(handle, inbuff, cs.cbInQue, &nBytesRead, NULL))
-					if (nBytesRead == 1 && (inbuff[0] == ENQ || inbuff[0] == ENQP))
-						write(priority ? ACKP : ACK);
+
+void Protocol::sendMessage(iostream filestream, bool priority = false) {
+
+}
+
+//Carson
+void Protocol::write(string message) {
+	unsigned char buffer[516];
+	DWORD i;
+	for (i = 0; i < message.length() || i < 516; i++) {
+		buffer[i] = message[i];
+	}
+	WriteFile(handle, buffer, i, 0, &OVERLAPPED());
+}
+
+//Carson
+void Protocol::write(char message) {
+	char buffer[1] = { message };
+	WriteFile(handle, buffer, 1, 0, &OVERLAPPED());
+}
+
+void Protocol::idle() {
+	char received;
+	while (1) {
+		if (messagesToSend.size() > 0) {
+			//GOTO confirmLine
 		}
 
-
+		//GOTO AcknowledgeLine
+		if (readNextChar(3, &received, [](char c) {return c == ENQ || c == ENQP; }))
+			acknowledgeLine();
 	}
+}
 
-	//Carson
-	void Protocol::sendMessage(string message, bool priority = false) {
-		//Figure out why it wont append EOT
-		message.append("" + SOH);
-		size_t i = 0;
-		priority = priority;
-		cout << message << endl;
-		while (i < message.length()) {
-			if (message.length() - i <= 512)
-				messagesToSend.push_back(message.substr(i, 512));
-			else
-				messagesToSend.push_back(message.substr(i, message.length() - i));
-			i += 512;
-		}
-	}
+void Protocol::wait() {
 
+}
 
-	void Protocol::sendMessage(iostream filestream, bool priority = false) {
+bool Protocol::validatePacket(string packet) {
+	return true;
+}
 
-	}
-
-	//Carson
-	void Protocol::write(string message) {
-		unsigned char buffer[516];
-		size_t i;
-		for (i = 0; i < message.length() || i < 516; i++) {
-			buffer[i] = message[i];
-		}
-		WriteFile(handle, buffer, i, 0, &OVERLAPPED());
-	}
-
-	//Carson
-	void Protocol::write(char message) {
-		unsigned char buffer[1] = { message };
-		WriteFile(handle, buffer, 1, 0, &OVERLAPPED());
-	}
-
-	void Protocol::idle() {
-
-	}
-
-	void Protocol::wait() {
-
-	}
+string Protocol::packetizePacket(string packet) {
+	return packet;
+}
