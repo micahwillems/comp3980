@@ -1,0 +1,2 @@
+#define GWL_HINSTANCE	-6
+#define IDC_TEXT_AREA	101
