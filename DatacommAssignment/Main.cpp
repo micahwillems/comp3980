@@ -3,18 +3,19 @@
 #include <stdio.h>
 #include <string.h>
 #include "Main.h"
+#include "Protocol.h"
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static TCHAR Name[] = TEXT("Assign4");
 HWND hwndMain, hwndButtonSend, hwndButtonConnect, hwndDisplayMain,
 	hwndDisplayStats, hwndButtonHelp, hwndChkBoxPriority;
+Protocol protocol;
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 	LPSTR lspszCmdParam, int nCmdShow)
 {
 	MSG Msg;
 	WNDCLASSEX Wcl;
-
 	Wcl.cbSize = sizeof(WNDCLASSEX);
 	Wcl.style = 0; 
 	Wcl.hIcon = LoadIcon(NULL, IDI_APPLICATION);
@@ -169,9 +170,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			char btnTxt[11];
 			SendMessage((HWND)lParam, WM_GETTEXT, 11, (LPARAM)btnTxt);
 			if (strcmp(btnTxt, "CONNECT") == 0) {
+				protocol.connect();
 				SendMessage((HWND)lParam, WM_SETTEXT, 0, (LPARAM)TEXT("DISCONNECT"));
 			}
 			else {
+				protocol.disconnect();
 				SendMessage((HWND)lParam, WM_SETTEXT, 0, (LPARAM)TEXT("CONNECT"));
 			}
 			// ***********Connect/Disconnect Button Clicked********************************************

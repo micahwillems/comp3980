@@ -14,25 +14,25 @@ DWORD WINAPI startTimer(LPVOID lpParameter) {
 	bool ended = false;
 	while (1) {
 		if (p.timeoutStatus.timeoutDuration >= 0) {
-			bool ended = false;
+			//Someone set the timer to start
+			ended = true;
 			timeoutTime = p.timeoutStatus.timeoutDuration;
 			p.timeoutStatus.timeoutDuration = -1;
 
 			while (p.timeoutStatus.timeSet + timeoutTime > curTime) {
 				if (p.timeoutStatus.loop) {
 					curTime = GetTickCount();
-				}
-				else {
+				} else {
 					p.timeoutStatus.timeout = false;
-					bool ended = true;
+					ended = false;
+					break;
 				}
 			}
 					
-			if (!ended) {
-				SetCommMask(p.handle, EV_RXCHAR);
+			if (ended) {
 				p.timeoutStatus.timeout = true;
-				ended = false;
 				p.timeoutStatus.timeoutDuration = -1;
+				SetCommMask(p.handle, 0);
 			}
 		}
 	}
