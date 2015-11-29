@@ -55,19 +55,22 @@ struct TimeoutData {
 
 class Protocol {
 	private:
+		//Private vars
+		HANDLE timeoutThread;
+		DWORD timeoutThreadId;
+		HANDLE protocolThread;
+		DWORD protocolThreadId;
 
 		//Private methods : shared
-		void idle();
 		void wait();
 		void write(std::string message);
 		void write(char message);
-		char* readNext(int timeout);
 
 		//Private methods: receiver
 		void acknowledgeLine();
-		void waitForPacket(std::string message);
-		void packetCheck();
-		void acknowledgePacket();
+		void waitForPacket();
+		void packetCheck(std::string packet);
+		void acknowledgePacket(std::string packet);
 		void checkPriorityStateReceiver();
 
 		//Private methods: sender
@@ -91,8 +94,11 @@ class Protocol {
 		HANDLE handle;
 
 		//Public methods
+		void idle();
 		Protocol();
 		~Protocol();
+		void connect();
+		void disconnect();
 		void sendMessage(std::string message, bool priority);
 		void sendMessage(std::iostream filestream, bool priority);
 		//The function that creates a thread MUST be public because it
@@ -102,21 +108,12 @@ class Protocol {
 
 		TimeoutData timeoutStatus;
 
-	//Private vars
-	HANDLE timeoutThread;
-	DWORD timeoutThreadId;
-
 	//Private methods : shared
 	bool validatePacket(std::string packet);
 	std::string packetizePacket(std::string packet);
 	template<class UnaryPredicate>
 	bool readNextChar(int timeout, char *c, UnaryPredicate predicate);
 	std::string readNextPacket(int timeout);
-
-	//Private methods: receiver
-	void waitForPacket();
-	void packetCheck(std::string packet);
-	void acknowledgePacket(std::string packet);
 
 	//Private methods: sender
 	void waitForAck();

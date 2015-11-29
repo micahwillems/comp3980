@@ -110,7 +110,7 @@ string Protocol::packetizePacket(string packet) {
 	return packet;
 }
 
-template<class UnaryPredicate>
+/*template<class UnaryPredicate>
 bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
 	char inbuff[1] { 0 };
 	bool loop = true;
@@ -118,7 +118,7 @@ bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
 	OVERLAPPED osStatus = { 0 };
 	DWORD timestamp = GetTickCount() + timeout;
 
-	/* generate event whenever a byte arives */
+	// generate event whenever a byte arives
 	if (!SetCommMask(handle, EV_RXCHAR)) {
 		dwError = GetLastError();
 		OutputDebugStringA("Failed to SetCommMask");
@@ -148,7 +148,7 @@ bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
 
 	timeoutStatus.stop();
 	return false;
-}
+}*/
 
 string Protocol::readNextPacket(int timeout) {
 	string packet = "";

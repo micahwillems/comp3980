@@ -9,6 +9,7 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static TCHAR Name[] = TEXT("Assign4");
 HWND hwndMain, hwndButtonSend, hwndButtonConnect, hwndDisplayMain,
 	hwndDisplayStats, hwndButtonHelp, hwndChkBoxPriority;
+Protocol protocol;
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 	LPSTR lspszCmdParam, int nCmdShow)
@@ -172,12 +173,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			SendMessage((HWND)lParam, WM_GETTEXT, 11, (LPARAM)btnTxt);
 			if (strcmp(btnTxt, "CONNECT") == 0) {
 				SendMessage((HWND)lParam, WM_SETTEXT, 0, (LPARAM)TEXT("DISCONNECT"));
+				EnableWindow((HWND)lParam, FALSE); // Momentarily disallow disconnecting, until the connection is finished opening
+				protocol.connect();
+				EnableWindow((HWND)lParam, TRUE); // Re-enable connection button after connection successfully initialized
 				EnableWindow(hwndButtonSend, TRUE);
-				Protocol protocol;
 			}
 			else {
 				SendMessage((HWND)lParam, WM_SETTEXT, 0, (LPARAM)TEXT("CONNECT"));
 				EnableWindow(hwndButtonSend, FALSE);
+				EnableWindow((HWND)lParam, FALSE);
+				protocol.connect();
+				EnableWindow((HWND)lParam, TRUE);
 			}
 		}
 		else if ((HWND)lParam == hwndChkBoxPriority) {
