@@ -27,6 +27,9 @@ void Protocol::connect() {
 		OutputDebugStringA("Error creating serial port handle");
 	}
 
+
+
+
 	timeoutThread = CreateThread(NULL, 0, startTimer, this, 0, &timeoutThreadId);
 	if (timeoutThread == NULL && DEBUG)
 		OutputDebugStringA("Error creating timeout thread");
@@ -48,15 +51,20 @@ void Protocol::disconnect() {
 //Carson
 void Protocol::sendMessage(string message, bool priority = false) {
 	//Figure out why it wont append EOT
-	message.append("" + SOH);
+	message = message.append("" + SOH);
+	string temp;
+	char tmp[30];
 	size_t i = 0;
+	OutputDebugString("MESSAGE SEND \n");
 	priority = priority;
-	cout << message << endl;
 	while (i < message.length()) {
-		if (message.length() - i <= 512)
+		if (message.length() - i >= 512) {
 			messagesToSend.push_back(message.substr(i, 512));
-		else
+
+		}
+		else {
 			messagesToSend.push_back(message.substr(i, message.length() - i));
+		}
 		i += 512;
 	}
 }

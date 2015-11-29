@@ -5,7 +5,6 @@
 #include <string>
 #include <iostream>
 #include <Windows.h>
-#include <atomic>
 
 //Debug
 #define DEBUG true
@@ -114,13 +113,9 @@ class Protocol {
 	template<class UnaryPredicate>
 	bool readNextChar(int timeout, char *c, UnaryPredicate predicate);
 	std::string readNextPacket(int timeout);
+	void checkmessage();
+	void send();
 
-	//Private methods: sender
-	void waitForAck();
-	void packetizeData();
-	void waitForACK();
-	void checkPriorityStateSender();
-	char test();
 };
 
 template<class UnaryPredicate>
@@ -178,4 +173,35 @@ inline bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predica
 	return false;
 }
 
+inline void Protocol::checkmessage() {
+	char buf[20];
+	int j;
+	if (messagesToSend.size() > 0) {
+		for (int i = 0; i < messagesToSend.size(); i++){
+			//for(auto a : messagesToSend) {
+			OutputDebugString("\n\n[packet]\n\n");
+			
+			j = sprintf_s(buf, "[ %d ] size:\t%zd\n",i, messagesToSend[i].length());
+			
+			if (messagesToSend[i].length() > 0) {
+				OutputDebugString(buf);
+				OutputDebugString("START overLength\n");
+				OutputDebugString(messagesToSend[i].c_str());
+				
+	//			OutputDebugString("\TLOL\n\n");
+			}
+			else
+				OutputDebugString("EMPTY\n");
+		}
+	}
+	else
+		OutputDebugString("no message");
+
+
+	
+}
+inline void Protocol::send() {
+	while(messagesToSend.size() != 0)
+		sendData(ACK);
+}
 #endif //PROTOCOL_H

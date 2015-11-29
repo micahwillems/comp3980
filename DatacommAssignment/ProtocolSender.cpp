@@ -74,6 +74,8 @@ void Protocol::confirmLine() {
 
 //TR1 wait for ack1
 void Protocol::waitForAck(char signal) {
+
+	OutputDebugString("WaitForAck");
 	if (signal == ACK || signal == ACKP) {
 		counter = 0;
 		sendData(signal);
@@ -87,11 +89,13 @@ void Protocol::waitForAck(char signal) {
 //TT2 Tx Data 
 //EUNWON
 void Protocol::sendData(char signal) {
+	OutputDebugString("sendData\n");
 	DWORD lpNumberOfByteWritten;
-	char message[516];
-	if (counter > 4) {
-		checkPriorityStateSender(signal);
-	}
+	char message[518];
+	
+	//if (counter > 4) {
+	//	checkPriorityStateSender(signal);
+//	}
 	if (messagesToSend.size() > 0) {
 		strcpy_s(message, messagesToSend.back().c_str());
 		messagesToSend.pop_back();
@@ -121,17 +125,17 @@ void Protocol::sendData(char signal) {
 
 void Protocol::packetizeData(string message) {
 	char temp[sizeof(message)];
-	strncpy_s(temp, message.c_str(), sizeof(message));
-	checksum *cs = new checksum();
-	for (char a : temp)
-		cs->add(a);
-	vector<char> checksum = cs->get();
-
+//	strcpy_s(temp, message.c_str());
+	//checksum *cs = new checksum();
+//	for (char a : temp)
+//		cs->add(a);
+//	vector<char> checksum = cs->get();
+	packet = "";
 	packet += SOH;
 	packet += syncBit;
-	packet += checksum[0];
-	packet += checksum[1];
-	packet += temp;
+//	packet += checksum[0];
+//	packet += checksum[1];
+	packet += message;
 
 }
 
