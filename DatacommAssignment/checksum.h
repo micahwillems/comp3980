@@ -1,13 +1,15 @@
 #pragma once
 #include <windows.h>
 #include <vector>
-class checksum {
+#include <string>
+
+class Checksum {
 public:
-	checksum() { clear(); }
+	Checksum() { clear(); }
 	void clear() { sum = 0; r = 55665; c1 = 52845; c2 = 22719; }
 	void add(char b);
 	std::vector<char>get();
-	boolean check(char a, char b);
+	boolean check(char a, char b); 
 protected:
 	WORD r;
 	WORD c1;
@@ -16,14 +18,14 @@ protected:
 };
 
 inline
-void checksum::add(char value) {
+void Checksum::add(char value) {
 	char cipher = (value ^ (r >> 8));
 	r = (cipher + r) * c1 + c2;
 	sum += cipher;
 }
 
 inline
-std::vector<char>checksum::get() {
+std::vector<char>Checksum::get() {
 	std::vector<char> out;
 	out.push_back((char)(sum / 256));
 	out.push_back((char)(sum % 256));
@@ -31,7 +33,7 @@ std::vector<char>checksum::get() {
 }
 
 inline
-boolean checksum::check(char a, char b) {
+boolean Checksum::check(char a, char b) {
 	WORD check;
 	check = (WORD)a * 256;
 	check += (byte)b;

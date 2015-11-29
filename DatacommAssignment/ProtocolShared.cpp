@@ -2,9 +2,11 @@
 #include <string>
 #include <windows.h>
 #include <stdio.h>
+#include <algorithm>
 #include "Protocol.h"
 #include "Timeout.h"
 #include <thread>
+#include "checksum.h"
 
 using namespace std;
 
@@ -27,9 +29,6 @@ void Protocol::connect() {
 		OutputDebugStringA("Error creating serial port handle");
 	}
 
-
-
-
 	timeoutThread = CreateThread(NULL, 0, startTimer, this, 0, &timeoutThreadId);
 	if (timeoutThread == NULL && DEBUG)
 		OutputDebugStringA("Error creating timeout thread");
@@ -38,6 +37,7 @@ void Protocol::connect() {
 	if (protocolThread == NULL && DEBUG)
 		OutputDebugStringA("Error creating protocol thread");
 
+	sync = SYNC0;
 }
 
 void Protocol::disconnect() {
@@ -59,6 +59,7 @@ void Protocol::sendMessage(string message, bool priority = false) {
 	priority = priority;
 	while (i < message.length()) {
 		if (message.length() - i >= 512) {
+		if (message.length() - i > 512)
 			messagesToSend.push_back(message.substr(i, 512));
 
 		}
@@ -95,6 +96,12 @@ void Protocol::idle() {
 	while (1) {
 		if (DEBUG)
 			OutputDebugStringA("Idle");
+	PurgeComm(handle, PURGE_RXCLEAR | PURGE_TXCLEAR | PURGE_RXABORT | PURGE_TXABORT);
+	char received;
+	otherPriority = false;
+	if (DEBUG)
+		OutputDebugStringA("\nIdle ");
+	while (1) {
 
 		if (messagesToSend.size() > 0) {
 			//enq
@@ -102,18 +109,55 @@ void Protocol::idle() {
 			//GOTO confirmLine
 		}
 
-		//GOTO AcknowledgeLine
-		if (readNextChar(1, &received, [](char c) {return (c == ENQ || c == ENQP || c == A); }))
+		//GOTO AcknowledgeLine	
+		if (readNextChar(1, &received, [this](char c) {
+			if (c == ENQP)
+				otherPriority = true;
+			return (c == ENQ || c == ENQP);
+			})) {
+			timeoutStatus.stop();
 			acknowledgeLine();
+		}
 	}
 }
 
 void Protocol::wait() {
-
+	otherPriority = false;
+	DWORD curTime = GetTickCount();
+	char received;
+	if (DEBUG)
+		OutputDebugStringA("\nWait");
+	while (1) {
+		if (readNextChar(2, &received, [this](char c) {
+			if (c == ENQP)
+				otherPriority = true;
+			return (c == ENQ || c == ENQP);
+		}))
+			acknowledgeLine();
+		if (curTime + GLOBAL_TIMEOUT > GetTickCount()) {
+			idle();
+		}
+	}
 }
 
 bool Protocol::validatePacket(string packet) {
-	return true;
+	vector<char> chars;
+	Checksum checksum;
+
+	//Valid length
+	if (packet.length() < 5 || packet.length() > 516)
+		return false;
+
+	for (int i = 4; i < packet.length(); i++)
+		checksum.add(packet[i]);
+
+	chars = checksum.get();
+
+	//Validate header, sync bit and  checksum
+	return (packet[0] == SOH &&
+		packet[1] == sync == SYNC0 ? SYNC0 : SYNC1 &&
+		packet[2] == '0' &&//chars[0] &&
+		packet[3] == '0');//chars[1]);
 }
 
 string Protocol::packetizePacket(string packet) {
@@ -121,6 +165,7 @@ string Protocol::packetizePacket(string packet) {
 }
 
 /*template<class UnaryPredicate>
+template<class UnaryPredicate>
 bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
 	char inbuff[1] { 0 };
 	bool loop = true;
@@ -132,21 +177,37 @@ bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
 	if (!SetCommMask(handle, EV_RXCHAR)) {
 		dwError = GetLastError();
 		OutputDebugStringA("Failed to SetCommMask");
+
+	/* generate event whenever a byte arives */
+	if (!SetCommMask(handle, EV_RXCHAR)) {
+		dwError = GetLastError();
+		OutputDebugStringA("(Char)Failed to SetCommMask ");
 		return false;
 	}
 	timeoutStatus.setTimeout(timeout);
-
-	ListenForEvent:
-	if (!WaitCommEvent(handle, &dwEvent, NULL))
-		return false;
 	
 	if (!(dwEvent & EV_RXCHAR))
 		return false;
+	if (!WaitCommEvent(handle, &dwEvent, NULL)) {
+		if (!(timeoutStatus.timeout)) {
+			OutputDebugStringA("\n(Char)Failed to WaitCommEvent");
+			timeoutStatus.stop();
+		}
+		return false;
+	}
+	
+	if (!(dwEvent & EV_RXCHAR)) {
+		if (!(timeoutStatus.timeout)) {
+			OutputDebugStringA("\n(Char)Failed to read character");
+			timeoutStatus.stop();
+		}
+		return false;
+	}
 
 	if (ReadFile(handle, &inbuff, sizeof(char), &nBytesRead, &osStatus)) {
 		if (predicate(inbuff[0])) {
 			if (DEBUG)
-				OutputDebugStringA("Match");
+				OutputDebugStringA("\nMatch");
 			*c = inbuff[0];
 			return true;
 		} else {
@@ -158,7 +219,7 @@ bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
 
 	timeoutStatus.stop();
 	return false;
-}*/
+}
 
 string Protocol::readNextPacket(int timeout) {
 	string packet = "";
@@ -167,11 +228,17 @@ string Protocol::readNextPacket(int timeout) {
 	DWORD nBytesRead, dwEvent, dwError;
 	OVERLAPPED osStatus = { 0 };
 	DWORD timestamp = GetTickCount() + timeout;
+}
+
+bool Protocol::readNextPacket(int timeout, string& s) {
+	char inbuff[516]{ '\0' };
+	DWORD nBytesRead = 0, dwEvent, dwError;
+	OVERLAPPED osStatus = { 0 };
 
 	/* generate event whenever a byte arives */
 	if (!SetCommMask(handle, EV_RXCHAR)) {
 		dwError = GetLastError();
-		OutputDebugStringA("Failed to SetCommMask");
+		OutputDebugStringA("(Packet)Failed to SetCommMask");
 		return false;
 	}
 
@@ -192,4 +259,29 @@ string Protocol::readNextPacket(int timeout) {
 	}
 
 	return packet;
+	ListenForEvent:
+	if (WaitCommEvent(handle, &dwEvent, NULL) == 0) {
+		if (!(timeoutStatus.timeout)) {
+			OutputDebugStringA("\n(Packet)Failed to WaitCommEvent");
+			timeoutStatus.stop();
+		}
+		return false;
+	}
+
+	if (!(dwEvent & EV_RXCHAR)) {
+		if (!(timeoutStatus.timeout)) {
+			OutputDebugStringA("\n(Packet)Failed to read character");
+			timeoutStatus.stop();
+		}
+		return false;
+	}
+
+	ReadFile(handle, &inbuff, sizeof(char) * 516, &nBytesRead, &osStatus);
+	GetOverlappedResult(handle, &osStatus, &nBytesRead, true);
+
+	timeoutStatus.stop();
+
+	for (int i = 0; i < nBytesRead; i++)
+		s[i] = inbuff[i];
+	return true;
 }

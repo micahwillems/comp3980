@@ -24,6 +24,22 @@
 #define SYNC0 (char)0x0F
 #define SYNC1 (char)0xF0
 #define A    (char)65
+//#define	ENQ   (char)0x05
+//#define	ENQP  (char)0x12
+//#define ACK   (char)0x06
+//#define ACKP  (char)0x11
+//#define SOH   (char)0x01
+//#define EOT   (char)0x04
+//#define SYNC0 (char)0xF1
+//#define SYNC1 (char)0xF0
+#define	ENQ   (char)101
+#define	ENQP  (char)69
+#define ACK   (char)97
+#define ACKP  (char)65
+#define SOH   (char)83
+#define EOT   (char)122
+#define SYNC0 (char)48
+#define SYNC1 (char)49
 
 struct TimeoutData {
 	bool loop;
@@ -32,21 +48,15 @@ struct TimeoutData {
 	DWORD timeSet;
 
 	TimeoutData() {
-		timeout = false;
-		timeoutDuration = -1;
+		stop();
 		timeSet = GetTickCount();
-		loop = false;
 	}
 
 	void stop() {
-		loop = false;
 		timeoutDuration = -1;
-		timeout = false;
 	}
 
 	void setTimeout(int time) {
-		if (DEBUG)
-			std::cout << "Setting Timeout: " << time << "ms" << std::endl;
 		loop = true;
 		timeout = false;
 		timeoutDuration = time;
@@ -208,4 +218,55 @@ inline void Protocol::send() {
 	while(messagesToSend.size() != 0)
 		sendData(ACK);
 }
+public:
+	//Public vars
+	bool priority;
+	bool otherPriority;
+	bool isAvailable;
+	std::vector<std::string> messagesToSend;
+	HANDLE handle;
+	TimeoutData timeoutStatus;
+
+	//Public methods
+	Protocol();
+	~Protocol();
+	void connect();
+	void disconnect();
+	void sendMessage(std::string message, bool priority);
+	void sendMessage(std::iostream filestream, bool priority);
+	void idle();
+
+private:
+	//Private vars
+	HANDLE timeoutThread;
+	DWORD timeoutThreadId;
+	HANDLE protocolThread;
+	DWORD protocolThreadId;
+	char sync;
+
+	//Private methods : shared
+	void wait();
+	void write(std::string message);
+	void write(char message);
+	bool validatePacket(std::string packet);
+	std::string packetizePacket(std::string packet);
+	template<class UnaryPredicate>
+	bool readNextChar(int timeout, char * c, UnaryPredicate predicate);
+	bool readNextPacket(int timeout, std::string& s);
+
+	//Private methods: receiver
+	void acknowledgeLine();
+	void waitForPacket();
+	void packetCheck(std::string packet);
+	void acknowledgePacket(std::string packet);
+	void checkPriorityStateReceiver();
+
+	//Private methods: sender
+	void confirmLine();
+	void waitForAck();
+	void packetizeData();
+	void waitForACK();
+	void checkPriorityStateSender();
+};
+
 #endif //PROTOCOL_H
