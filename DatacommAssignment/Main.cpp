@@ -2,8 +2,18 @@
 #include <commctrl.h>
 #include <stdio.h>
 #include <string.h>
+#include <fstream>
+#include<sstream>
 #include "Main.h"
 #include "Protocol.h"
+using namespace std;
+//openfile
+TCHAR szFile[517];
+OPENFILENAME ofn = { 0 };
+void FileOpen(HWND hwnd);
+string insertbash(const string& s);
+string getMessage();
+
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static TCHAR Name[] = TEXT("Assign4");
@@ -165,6 +175,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		}
 		else if ((HWND)lParam == hwndButtonSend) {
 			// ***********Send File Button Clicked*****************************************************
+			FileOpen(hwnd);
+			string mesg = getMessage();
+			OutputDebugString(mesg.c_str());
+		
 		}
 		else if ((HWND)lParam == hwndButtonConnect) {
 			// ***********Connect/Disconnect Button Clicked********************************************
@@ -202,4 +216,59 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		return DefWindowProc(hwnd, Message, wParam, lParam);
 	}
 	return 0;
+}
+
+void FileOpen(HWND hwnd)
+{
+	ofn = { 0 };           // common dialog box structure
+
+						   // Zero out szFile so that GetOpenFileName does
+						   // not use the contents to initialize itself.
+	ZeroMemory(szFile, sizeof(szFile));
+
+	// Initialize OPENFILENAME
+	memset(&ofn, 0, sizeof(ofn));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = hwnd;
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrFilter = TEXT("Text\0*.TXT\0");
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+	// Display the Open dialog box.
+	if (!GetOpenFileName(&ofn))
+		OutputDebugString("NOT open file");
+
+}
+string getMessage() {
+	string filename = insertbash(szFile);
+	HANDLE hFile;
+	strcpy_s(szFile, filename.c_str());
+
+	ifstream infile(szFile);
+	string line;
+	string msg = "";
+	while (std::getline(infile, line)) {
+		std::istringstream iss(line);
+		msg += line;
+		msg += "\n";
+	}
+
+	return msg;
+}
+string insertbash(const string& s) {
+	size_t i = 0;
+	string s2;
+	char prev = s[0];
+	for (i = 0; i < s.size(); i++) {
+		if (prev == '\\')
+			s2 += '\\';
+		s2 += s[i];
+		prev = s[i];
+	}
+	return s2;
 }
