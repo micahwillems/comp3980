@@ -3,13 +3,11 @@
 #include "checksum.h"
 using namespace std;
 
-
 //for send thread
 HANDLE senderThread;
 DWORD dwWriteId;
 BOOL fWaitingOnSend = FALSE;
 OVERLAPPED osWrite = { 0 };
-
 
 //MESSAGE HANDLING read
 DWORD WINAPI Protocol::SendThreadFunc(void) {
@@ -19,14 +17,9 @@ DWORD WINAPI Protocol::SendThreadFunc(void) {
 	COMSTAT cs;
 	TCHAR signalMessage;
 	DWORD error;
-
-
 	char str;
-
 	DWORD		numOfByteSignal;
 	DWORD		dwSignalRes;
-
-
 
 	if ((os.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)) != NULL) {
 		OutputDebugString("CREATE Event Error\n");
@@ -64,13 +57,11 @@ VOID Protocol::initialize_Send(void) {
 }
 
 //TT1 : Confirm Line
-
 void Protocol::confirmLine() {
 	if (counter > 4)
 		wait();
 	write(priority ? ENQ : ENQP);
 }
-
 
 //TR1 wait for ack1
 void Protocol::waitForAck(char signal) {
@@ -105,7 +96,7 @@ void Protocol::sendData(char signal) {
 	packetizeData(message);
 
 	OutputDebugString("\nPacketized message : ");
-	OutputDebugString(packet.c_str);
+	OutputDebugString(packet.c_str());
 
 	if (osWrite.hEvent != NULL) {
 		if (!WriteFile(handle, (LPCVOID)packet.c_str(), sizeof(packet), &lpNumberOfByteWritten, &osWrite)) {  // size change to non fixed.

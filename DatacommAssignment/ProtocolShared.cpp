@@ -97,11 +97,13 @@ void Protocol::idle() {
 			OutputDebugStringA("Idle");
 
 		if (messagesToSend.size() > 0) {
+			//enq
+			//pop
 			//GOTO confirmLine
 		}
 
 		//GOTO AcknowledgeLine
-		if (readNextChar(1000, &received, [](char c) {return (c == ENQ || c == ENQP || c == A); }))
+		if (readNextChar(1, &received, [](char c) {return (c == ENQ || c == ENQP || c == A); }))
 			acknowledgeLine();
 	}
 }
