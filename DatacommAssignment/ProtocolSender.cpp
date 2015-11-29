@@ -91,7 +91,7 @@ void Protocol::waitForAck(char signal) {
 void Protocol::sendData(char signal) {
 	OutputDebugString("sendData\n");
 	DWORD lpNumberOfByteWritten;
-	char message[518];
+	char message[517] = { '\0' };
 	
 	//if (counter > 4) {
 	//	checkPriorityStateSender(signal);
@@ -104,6 +104,8 @@ void Protocol::sendData(char signal) {
 	//packtize
 	packetizeData(message);
 
+	OutputDebugString("\nPacketized message : ");
+	OutputDebugString(packet.c_str);
 
 	if (osWrite.hEvent != NULL) {
 		if (!WriteFile(handle, (LPCVOID)packet.c_str(), sizeof(packet), &lpNumberOfByteWritten, &osWrite)) {  // size change to non fixed.
@@ -115,7 +117,7 @@ void Protocol::sendData(char signal) {
 	else {
 		//go to TR2
 		packet = "";
-		syncBit = (syncBit == 0 ? 1 : 0);
+		syncBit = (syncBit == SYNC0 ? SYNC1 : SYNC0);
 
 		waitForACK(signal);
 	}
@@ -124,17 +126,17 @@ void Protocol::sendData(char signal) {
 
 
 void Protocol::packetizeData(string message) {
-	char temp[sizeof(message)];
-//	strcpy_s(temp, message.c_str());
-	//checksum *cs = new checksum();
-//	for (char a : temp)
-//		cs->add(a);
-//	vector<char> checksum = cs->get();
+	char temp[512] = { '\0' };
+	strcpy_s(temp, message.c_str());
+	checksum *cs = new checksum();
+	for (char a : temp)
+		cs->add(a);
+	vector<char> checksum = cs->get();
 	packet = "";
 	packet += SOH;
 	packet += syncBit;
-//	packet += checksum[0];
-//	packet += checksum[1];
+	packet += checksum[0];
+	packet += checksum[1];
 	packet += message;
 
 }

@@ -21,6 +21,8 @@
 #define ACKP (char)17
 #define SOH  (char)1
 #define EOT  (char)4
+#define SYNC0 (char)0x0F
+#define SYNC1 (char)0xF0
 #define A    (char)65
 
 struct TimeoutData {
@@ -84,7 +86,7 @@ class Protocol {
 		//Public vars
 		bool priority;
 		bool isAvailable;
-		int syncBit = 0;
+		int syncBit = SYNC0;
 		int counter = 0;
 		std::string msg;
 		std::vector<std::string> messagesToSend;
@@ -173,6 +175,7 @@ inline bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predica
 	return false;
 }
 
+//temporal method to check message to send
 inline void Protocol::checkmessage() {
 	char buf[20];
 	int j;
@@ -200,6 +203,7 @@ inline void Protocol::checkmessage() {
 
 	
 }
+//temporal method to check send
 inline void Protocol::send() {
 	while(messagesToSend.size() != 0)
 		sendData(ACK);
