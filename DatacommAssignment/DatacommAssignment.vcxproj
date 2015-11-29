@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Main.h" />
     <ClInclude Include="Protocol.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
@@ -27,6 +28,17 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="ProtocolReceiver.cpp" />
+    <ClCompile Include="ProtocolSender.cpp" />
+    <ClCompile Include="ProtocolShared.cpp" />
+    <ClCompile Include="Source.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DatacommAssignment.aps" />
+    <None Include="DatacommAssignment1.aps" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DatacommAssignment.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4E147E88-87FE-48C5-9F67-5847BD6554AC}</ProjectGuid>
