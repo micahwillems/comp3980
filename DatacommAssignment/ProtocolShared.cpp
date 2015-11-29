@@ -8,14 +8,30 @@ using namespace std;
 
 //Carson
 Protocol::Protocol() {
-	if ((handle = CreateFile(TEXT("COM1"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL)) == INVALID_HANDLE_VALUE) {
-		DWORD dwError = GetLastError();
-	}
+	handle = CreateFile(NULL, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 }
 
 Protocol::~Protocol() {
 
 }
+
+char* Protocol::readNext(int timeout) {
+	if (!SetCommMask(handle, EV_RXFLAG))
+		return 0;
+	osStatus.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL)
+		if (overlapStatus.hEvent == NULL)
+			return 0;
+
+	if (!fWaitingonStat) {
+		if (WaitCommEvent(hComm, &commEvent, &overlapStatus)) {
+			if ((dwEvent & EV_RXCHAR) && cs.cbInQue)
+				if (ReadFile(handle, inbuff, cs.cbInQue, &nBytesRead, NULL))
+					if (nBytesRead == 1 && (inbuff[0] == ENQ || inbuff[0] == ENQP))
+						write(priority ? ACKP : ACK);
+		}
+
+
+	}
 
 	//Carson
 	void Protocol::sendMessage(string message, bool priority = false) {
@@ -41,7 +57,7 @@ Protocol::~Protocol() {
 	//Carson
 	void Protocol::write(string message) {
 		unsigned char buffer[516];
-		DWORD i;
+		size_t i;
 		for (i = 0; i < message.length() || i < 516; i++) {
 			buffer[i] = message[i];
 		}
@@ -50,7 +66,7 @@ Protocol::~Protocol() {
 
 	//Carson
 	void Protocol::write(char message) {
-		char buffer[1] = { message };
+		unsigned char buffer[1] = { message };
 		WriteFile(handle, buffer, 1, 0, &OVERLAPPED());
 	}
 
