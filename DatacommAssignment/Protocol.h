@@ -57,6 +57,49 @@ struct TimeoutData {
 };
 
 class Protocol {
+	private:
+		//Private vars
+		HANDLE handle;
+
+		//Private methods : shared
+		void idle();
+		void wait();
+		void write(std::string message);
+		void write(char message);
+		char* readNext(int timeout);
+
+		//Private methods: receiver
+		void acknowledgeLine();
+		void waitForPacket(std::string message);
+		void packetCheck();
+		void acknowledgePacket();
+		void checkPriorityStateReceiver();
+
+		//Private methods: sender
+		VOID initialize_Send(HWND hwnd);
+		DWORD WINAPI SendThreadFunc(LPVOID thread);
+		void confirmLine();
+		void waitForAck(char signal);
+		void sendData(char signal);
+		void packetizeData(std::string message);
+		void waitForACK(char signal);
+		void checkPriorityStateSender(char signal);
+
+	public:
+		//Public vars
+		bool priority;
+		bool isAvailable;
+		int syncBit = 0;
+		int counter = 0;
+		std::string msg;
+		std::vector<std::string> messagesToSend;
+		std::string packet;
+
+		//Public methods
+		Protocol();
+		~Protocol();
+		void sendMessage(std::string message, bool priority);
+		void sendMessage(std::iostream filestream, bool priority);
 public:
 	//Public vars
 	bool priority;
