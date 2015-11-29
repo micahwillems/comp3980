@@ -35,7 +35,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="DatacommAssignment.aps" />
-    <None Include="DatacommAssignment1.aps" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DatacommAssignment.rc" />
