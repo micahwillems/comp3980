@@ -178,8 +178,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			// ***********Send File Button Clicked*****************************************************
 			FileOpen(hwnd);
 			string mesg = getMessage();
-			OutputDebugString(mesg.c_str());
-		
+			//OutputDebugString(mesg.c_str());
+			protocol.sendMessage(mesg, false);
+			protocol.checkmessage();
+			protocol.send(); 
+
 		}
 		else if ((HWND)lParam == hwndButtonConnect) {
 			// ***********Connect/Disconnect Button Clicked********************************************
