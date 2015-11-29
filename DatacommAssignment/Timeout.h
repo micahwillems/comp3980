@@ -14,13 +14,11 @@ DWORD WINAPI startTimer(LPVOID lpParameter) {
 	bool ended = false;
 	while (1) {
 		if (p.timeoutStatus.timeoutDuration >= 0) {
-			OutputDebugStringA("Entered timeout loop");
 			bool ended = false;
 			timeoutTime = p.timeoutStatus.timeoutDuration;
 			p.timeoutStatus.timeoutDuration = -1;
 
 			while (p.timeoutStatus.timeSet + timeoutTime > curTime) {
-				OutputDebugStringA("Entered second timeout loop");
 				if (p.timeoutStatus.loop) {
 					curTime = GetTickCount();
 				}
@@ -31,7 +29,6 @@ DWORD WINAPI startTimer(LPVOID lpParameter) {
 			}
 					
 			if (!ended) {
-				OutputDebugStringA("Entered third timeout loop");
 				SetCommMask(p.handle, EV_RXCHAR);
 				p.timeoutStatus.timeout = true;
 				ended = false;

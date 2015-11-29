@@ -8,22 +8,41 @@
 
 using namespace std;
 
-//Carson
-Protocol::Protocol() {
-	if ((handle = CreateFile(TEXT("COM1"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL)) == INVALID_HANDLE_VALUE) {
-		DWORD dwError = GetLastError();
-	}
-	OutputDebugStringA("Created File");
-	timeoutThread = CreateThread(NULL, 0, startTimer, this, 0, &timeoutThreadId);
-	OutputDebugStringA("Created Timeout Thread");
-	//thread timeoutThread(&startTimer, this);
-	//timeoutThread.detach();
-	if (timeoutThread == NULL && DEBUG)
-		OutputDebugStringA("Error creating timeout thread");
+DWORD WINAPI startProtocol(LPVOID lpParameter) {
+	Protocol &p = *((Protocol *)lpParameter);
+	p.idle();
+	return 0;
 }
 
-Protocol::~Protocol() {
+//Carson
+Protocol::Protocol() {}
 
+Protocol::~Protocol() {
+	disconnect();
+}
+
+void Protocol::connect() {
+	if ((handle = CreateFile(TEXT("COM1"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL)) == INVALID_HANDLE_VALUE) {
+		DWORD dwError = GetLastError();
+		OutputDebugStringA("Error creating serial port handle");
+	}
+
+	timeoutThread = CreateThread(NULL, 0, startTimer, this, 0, &timeoutThreadId);
+	if (timeoutThread == NULL && DEBUG)
+		OutputDebugStringA("Error creating timeout thread");
+
+	protocolThread = CreateThread(NULL, 0, startProtocol, this, 0, &protocolThreadId);
+	if (protocolThread == NULL && DEBUG)
+		OutputDebugStringA("Error creating protocol thread");
+
+}
+
+void Protocol::disconnect() {
+	TerminateThread(timeoutThread, 0);
+	TerminateThread(protocolThread, 0);
+	if (&handle != INVALID_HANDLE_VALUE)
+		CloseHandle(handle);
+	OutputDebugStringA("Deconstructed");
 }
 
 //Carson
@@ -64,14 +83,17 @@ void Protocol::write(char message) {
 }
 
 void Protocol::idle() {
-	char received;
+	char received = 'a';
 	while (1) {
+		if (DEBUG)
+			OutputDebugStringA("Idle");
+
 		if (messagesToSend.size() > 0) {
 			//GOTO confirmLine
 		}
 
 		//GOTO AcknowledgeLine
-		if (readNextChar(3, &received, [](char c) {return c == ENQ || c == ENQP; }))
+		if (readNextChar(1000, &received, [](char c) {return (c == ENQ || c == ENQP || c == A); }))
 			acknowledgeLine();
 	}
 }
@@ -85,5 +107,79 @@ bool Protocol::validatePacket(string packet) {
 }
 
 string Protocol::packetizePacket(string packet) {
+	return packet;
+}
+
+template<class UnaryPredicate>
+bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
+	char inbuff[1] { 0 };
+	bool loop = true;
+	DWORD nBytesRead, dwEvent, dwError;
+	OVERLAPPED osStatus = { 0 };
+	DWORD timestamp = GetTickCount() + timeout;
+
+	/* generate event whenever a byte arives */
+	if (!SetCommMask(handle, EV_RXCHAR)) {
+		dwError = GetLastError();
+		OutputDebugStringA("Failed to SetCommMask");
+		return false;
+	}
+	timeoutStatus.setTimeout(timeout);
+
+	ListenForEvent:
+	if (!WaitCommEvent(handle, &dwEvent, NULL))
+		return false;
+	
+	if (!(dwEvent & EV_RXCHAR))
+		return false;
+
+	if (ReadFile(handle, &inbuff, sizeof(char), &nBytesRead, &osStatus)) {
+		if (predicate(inbuff[0])) {
+			if (DEBUG)
+				OutputDebugStringA("Match");
+			*c = inbuff[0];
+			return true;
+		} else {
+			dwError = GetLastError();
+			OutputDebugStringA("Failed UnaryPredicate Test");
+			goto ListenForEvent;
+		}
+	}
+
+	timeoutStatus.stop();
+	return false;
+}
+
+string Protocol::readNextPacket(int timeout) {
+	string packet = "";
+	char inbuff[516]{ 0 };
+	bool loop = true;
+	DWORD nBytesRead, dwEvent, dwError;
+	OVERLAPPED osStatus = { 0 };
+	DWORD timestamp = GetTickCount() + timeout;
+
+	/* generate event whenever a byte arives */
+	if (!SetCommMask(handle, EV_RXCHAR)) {
+		dwError = GetLastError();
+		OutputDebugStringA("Failed to SetCommMask");
+		return false;
+	}
+
+	timeoutStatus.setTimeout(timeout);
+
+	if (!WaitCommEvent(handle, &dwEvent, NULL))
+		return false;
+
+	if (!(dwEvent & EV_RXCHAR))
+		return false;
+
+	ReadFile(handle, &inbuff, sizeof(char) * 516, &nBytesRead, &osStatus);
+
+	timeoutStatus.stop();
+
+	for (char c : inbuff) {
+		packet = packet.append(&c);
+	}
+
 	return packet;
 }
