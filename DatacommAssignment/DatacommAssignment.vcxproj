@@ -22,6 +22,7 @@
     <ClInclude Include="Main.h" />
     <ClInclude Include="Protocol.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Timeout.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -31,7 +32,6 @@
     <ClCompile Include="ProtocolReceiver.cpp" />
     <ClCompile Include="ProtocolSender.cpp" />
     <ClCompile Include="ProtocolShared.cpp" />
-    <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DatacommAssignment.aps" />

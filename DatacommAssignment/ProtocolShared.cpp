@@ -13,7 +13,9 @@ Protocol::Protocol() {
 	if ((handle = CreateFile(TEXT("COM1"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL)) == INVALID_HANDLE_VALUE) {
 		DWORD dwError = GetLastError();
 	}
+	OutputDebugStringA("Created File");
 	timeoutThread = CreateThread(NULL, 0, startTimer, this, 0, &timeoutThreadId);
+	OutputDebugStringA("Created Timeout Thread");
 	//thread timeoutThread(&startTimer, this);
 	//timeoutThread.detach();
 	if (timeoutThread == NULL && DEBUG)

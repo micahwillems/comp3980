@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "Main.h"
+#include "Protocol.h"
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static TCHAR Name[] = TEXT("Assign4");
@@ -83,8 +84,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 	hwndButtonSend = CreateWindow(
 		TEXT("BUTTON"),  
 		TEXT("SEND FILE"),  
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  
-		550,       
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | WS_DISABLED,  
+		550,
 		60,        
 		90,        
 		25,        
@@ -166,15 +167,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			// ***********Send File Button Clicked*****************************************************
 		}
 		else if ((HWND)lParam == hwndButtonConnect) {
+			// ***********Connect/Disconnect Button Clicked********************************************
 			char btnTxt[11];
 			SendMessage((HWND)lParam, WM_GETTEXT, 11, (LPARAM)btnTxt);
 			if (strcmp(btnTxt, "CONNECT") == 0) {
 				SendMessage((HWND)lParam, WM_SETTEXT, 0, (LPARAM)TEXT("DISCONNECT"));
+				EnableWindow(hwndButtonSend, TRUE);
+				Protocol protocol;
 			}
 			else {
 				SendMessage((HWND)lParam, WM_SETTEXT, 0, (LPARAM)TEXT("CONNECT"));
+				EnableWindow(hwndButtonSend, FALSE);
 			}
-			// ***********Connect/Disconnect Button Clicked********************************************
 		}
 		else if ((HWND)lParam == hwndChkBoxPriority) {
 			if (SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED) {

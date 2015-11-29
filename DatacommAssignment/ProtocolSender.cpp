@@ -12,7 +12,7 @@ OVERLAPPED osWrite = { 0 };
 
 
 //MESSAGE HANDLING read
-DWORD WINAPI Protocol::SendThreadFunc(LPVOID thread) {
+DWORD WINAPI Protocol::SendThreadFunc(void) {
 	BYTE buf[516];
 	DWORD nBytesRead, dwEvent, dwError, dwRead;
 	OVERLAPPED os = { 0 };
@@ -50,8 +50,16 @@ DWORD WINAPI Protocol::SendThreadFunc(LPVOID thread) {
 	return 0;
 }
 
-VOID Protocol::initialize_Send(HWND hwnd) {
-	senderThread = CreateThread(NULL, 0, SendThreadFunc, (LPVOID)hwnd, 0, &dwWriteId);
+DWORD WINAPI WrappedThreadFunc(LPVOID arg) {
+	if (!arg)
+		return 0;
+	Protocol *protPtr = (Protocol*)arg;
+	protPtr->SendThreadFunc();
+	return 1;
+}
+
+VOID Protocol::initialize_Send(void) {
+	senderThread = CreateThread(NULL, 0, WrappedThreadFunc, this, 0, &dwWriteId);
 
 }
 
@@ -84,8 +92,10 @@ void Protocol::sendData(char signal) {
 	if (counter > 4) {
 		checkPriorityStateSender(signal);
 	}
-	if (messagesToSend.size() > 0)
-		std::strcpy(message, messagesToSend.pop_back.c_str());
+	if (messagesToSend.size() > 0) {
+		strcpy_s(message, messagesToSend.back().c_str());
+		messagesToSend.pop_back();
+	}
 
 	//packtize
 	packetizeData(message);
@@ -111,7 +121,7 @@ void Protocol::sendData(char signal) {
 
 void Protocol::packetizeData(string message) {
 	char temp[sizeof(message)];
-	strncpy(temp, message.c_str(), sizeof(message));
+	strncpy_s(temp, message.c_str(), sizeof(message));
 	checksum *cs = new checksum();
 	for (char a : temp)
 		cs->add(a);
@@ -119,8 +129,8 @@ void Protocol::packetizeData(string message) {
 
 	packet += SOH;
 	packet += syncBit;
-	packet += checksum.pop_back;
-	packet += checksum.pop_back;
+	packet += checksum[0];
+	packet += checksum[1];
 	packet += temp;
 
 }

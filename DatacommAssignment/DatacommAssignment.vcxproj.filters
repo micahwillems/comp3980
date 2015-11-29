@@ -24,6 +24,9 @@
     <ClInclude Include="Main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Timeout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -36,9 +39,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ProtocolShared.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

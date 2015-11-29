@@ -55,8 +55,6 @@ struct TimeoutData {
 
 class Protocol {
 	private:
-		//Private vars
-		HANDLE handle;
 
 		//Private methods : shared
 		void idle();
@@ -73,8 +71,6 @@ class Protocol {
 		void checkPriorityStateReceiver();
 
 		//Private methods: sender
-		VOID initialize_Send(HWND hwnd);
-		DWORD WINAPI SendThreadFunc(LPVOID thread);
 		void confirmLine();
 		void waitForAck(char signal);
 		void sendData(char signal);
@@ -91,36 +87,26 @@ class Protocol {
 		std::string msg;
 		std::vector<std::string> messagesToSend;
 		std::string packet;
+		//Must be public, accessed by Timeout.h
+		HANDLE handle;
 
 		//Public methods
 		Protocol();
 		~Protocol();
 		void sendMessage(std::string message, bool priority);
 		void sendMessage(std::iostream filestream, bool priority);
-public:
-	//Public vars
-	bool priority;
-	bool isAvailable;
-	std::vector<std::string> messagesToSend;
-	HANDLE handle;
-	TimeoutData timeoutStatus;
+		//The function that creates a thread MUST be public because it
+		//has to be called statically
+		VOID initialize_Send(void);
+		DWORD WINAPI SendThreadFunc(void);
 
-	//Public methods
-	Protocol();
-	~Protocol();
-	void sendMessage(std::string message, bool priority);
-	void sendMessage(std::iostream filestream, bool priority);
+		TimeoutData timeoutStatus;
 
-//private:
 	//Private vars
 	HANDLE timeoutThread;
 	DWORD timeoutThreadId;
 
 	//Private methods : shared
-	void idle();
-	void wait();
-	void write(std::string message);
-	void write(char message);
 	bool validatePacket(std::string packet);
 	std::string packetizePacket(std::string packet);
 	template<class UnaryPredicate>
@@ -128,19 +114,15 @@ public:
 	std::string readNextPacket(int timeout);
 
 	//Private methods: receiver
-	void acknowledgeLine();
 	void waitForPacket();
 	void packetCheck(std::string packet);
 	void acknowledgePacket(std::string packet);
-	void checkPriorityStateReceiver();
 
 	//Private methods: sender
-	void confirmLine();
 	void waitForAck();
 	void packetizeData();
 	void waitForACK();
 	void checkPriorityStateSender();
-
 	char test();
 };
 
