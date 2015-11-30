@@ -105,7 +105,7 @@ void Protocol::idle() {
 
 			if (messagesToSend.size() > 0) {
 				confirmLine();
-				if (readNextChar(1, &received, [this](char c) {
+				if (readNextChar(1000, &received, [this](char c) {
 					if (c == ACKP)
 						otherPriority = true;
 					return (c == ACK || c == ACKP);

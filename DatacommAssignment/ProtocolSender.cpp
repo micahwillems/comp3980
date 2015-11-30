@@ -93,20 +93,20 @@ void Protocol::waitForAckT2(char signal) {
 //EUNWON
 void Protocol::sendData() {
 	OutputDebugString("sendData\n");
-	char message[517] = { '\0' };
+	string message;
 	
 	//if (counter > 4) {
 	//	checkPriorityStateSender(signal);
 //	}
 	if (messagesToSend.size() > 0) {
-		strcpy_s(message, messagesToSend.front().c_str());
+		message = messagesToSend.front();
 		messagesToSend.pop_front();
 	}
 	
 	packetizeData(message);
 
 	OutputDebugString("\nPacketized message : ");
-	OutputDebugString(packet.c_str());
+	//OutputDebugString(packet.c_str());
 	syncBit = (syncBit == SYNC0 ? SYNC1 : SYNC0);
 	write(packet);
 }
