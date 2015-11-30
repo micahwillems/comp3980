@@ -181,7 +181,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			//OutputDebugString(mesg.c_str());
 			protocol.sendMessage(mesg, false);
 			protocol.checkmessage();
-			protocol.send(); 
+			//protocol.send(); 
+
 
 		}
 		else if ((HWND)lParam == hwndButtonConnect) {
@@ -250,7 +251,7 @@ void FileOpen(HWND hwnd)
 
 	// Display the Open dialog box.
 	if (!GetOpenFileName(&ofn))
-		OutputDebugString("NOT open file");
+		OutputDebugString("Could not open file");
 
 }
 string getMessage() {

@@ -1,7 +1,7 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
-#include <vector>
+#include <list>
 #include <string>
 #include <iostream>
 #include <Windows.h>
@@ -79,10 +79,10 @@ private:
 
 	//Private methods: sender
 	void confirmLine();
-	void waitForAck(char signal);
-	void sendData(char signal);
+	void waitForAckT1(char signal);
+	void sendData();
 	void packetizeData(std::string message);
-	void waitForACK(char signal);
+	void waitForAckT2(char signal);
 	void checkPriorityStateSender(char signal);
 
 public:
@@ -93,7 +93,7 @@ public:
 	int syncBit = SYNC0;
 	int counter = 0;
 	std::string msg;
-	std::vector<std::string> messagesToSend;
+	std::list<std::string> messagesToSend;
 	std::string packet;
 	//Must be public, accessed by Timeout.h
 	HANDLE handle;
@@ -129,16 +129,16 @@ inline void Protocol::checkmessage() {
 	char buf[20];
 	int j;
 	if (messagesToSend.size() > 0) {
-		for (int i = 0; i < messagesToSend.size(); i++){
+		for (auto i = messagesToSend.begin(); i != messagesToSend.end(); ++i){
 			//for(auto a : messagesToSend) {
 			OutputDebugString("\n\n[packet]\n\n");
 			
-			j = sprintf_s(buf, "[ %d ] size:\t%zd\n",i, messagesToSend[i].length());
+			j = sprintf_s(buf, "[ %d ] size:\t%zd\n", *i, i->length());
 			
-			if (messagesToSend[i].length() > 0) {
+			if (i->length() > 0) {
 				OutputDebugString(buf);
 				OutputDebugString("START overLength\n");
-				OutputDebugString(messagesToSend[i].c_str());
+				OutputDebugString(i->c_str());
 				
 	//			OutputDebugString("\TLOL\n\n");
 			}
@@ -151,10 +151,5 @@ inline void Protocol::checkmessage() {
 
 
 	
-}
-//temporal method to check send
-inline void Protocol::send() {
-	while(messagesToSend.size() != 0)
-		sendData(ACK);
 }
 #endif //PROTOCOL_H

@@ -24,7 +24,7 @@ Protocol::~Protocol() {
 }
 
 void Protocol::connect() {
-	if ((handle = CreateFile(TEXT("COM1"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL)) == INVALID_HANDLE_VALUE) {
+	if ((handle = CreateFile(TEXT("COM3"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL)) == INVALID_HANDLE_VALUE) {
 		DWORD dwError = GetLastError();
 		OutputDebugStringA("Error creating serial port handle");
 	}
@@ -104,9 +104,15 @@ void Protocol::idle() {
 		while (1) {
 
 			if (messagesToSend.size() > 0) {
-				//enq
-				//pop
-				//GOTO confirmLine
+				confirmLine();
+				if (readNextChar(1, &received, [this](char c) {
+					if (c == ACKP)
+						otherPriority = true;
+					return (c == ACK || c == ACKP);
+				})) {
+					timeoutStatus.stop();
+					sendData();
+				}
 			}
 
 			//GOTO AcknowledgeLine	

@@ -64,7 +64,7 @@ void Protocol::confirmLine() {
 }
 
 //TR1 wait for ack1
-void Protocol::waitForAck(char signal) {
+/*void Protocol::waitForAckT1(char signal) {
 
 	OutputDebugString("WaitForAck");
 	if (signal == ACK || signal == ACKP) {
@@ -77,41 +77,38 @@ void Protocol::waitForAck(char signal) {
 	}
 }
 
+//TR2 : wait for ack
+void Protocol::waitForAckT2(char signal) {
+	if (signal == ACK || signal == ACKP) {
+		//timeout
+		checkPriorityStateSender(signal);
+	}
+	else if (STATUS_TIMEOUT) { // timeout..?!?!?
+		counter++;
+		sendData(signal);
+	}
+}*/
+
 //TT2 Tx Data 
 //EUNWON
-void Protocol::sendData(char signal) {
+void Protocol::sendData() {
 	OutputDebugString("sendData\n");
-	DWORD lpNumberOfByteWritten;
 	char message[517] = { '\0' };
 	
 	//if (counter > 4) {
 	//	checkPriorityStateSender(signal);
 //	}
 	if (messagesToSend.size() > 0) {
-		strcpy_s(message, messagesToSend.back().c_str());
-		messagesToSend.pop_back();
+		strcpy_s(message, messagesToSend.front().c_str());
+		messagesToSend.pop_front();
 	}
-
-	//packtize
+	
 	packetizeData(message);
 
 	OutputDebugString("\nPacketized message : ");
 	OutputDebugString(packet.c_str());
-
-	if (osWrite.hEvent != NULL) {
-		if (!WriteFile(handle, (LPCVOID)packet.c_str(), sizeof(packet), &lpNumberOfByteWritten, &osWrite)) {  // size change to non fixed.
-			DWORD error = GetLastError();
-			if (error != ERROR_IO_PENDING)
-				OutputDebugString("ERROR IO PENDING\n");
-		}
-	}
-	else {
-		//go to TR2
-		packet = "";
-		syncBit = (syncBit == SYNC0 ? SYNC1 : SYNC0);
-
-		waitForACK(signal);
-	}
+	syncBit = (syncBit == SYNC0 ? SYNC1 : SYNC0);
+	write(packet);
 }
 
 
@@ -132,17 +129,7 @@ void Protocol::packetizeData(string message) {
 
 }
 
-//TR2 : wait for ack
-void Protocol::waitForACK(char signal) {
-	if (signal == ACK || signal == ACKP) {
-		//timeout
-		checkPriorityStateSender(signal);
-	}
-	else if (STATUS_TIMEOUT) { // timeout..?!?!?
-		counter++;
-		sendData(signal);
-	}
-}
+
 
 //S2 : check ACK for priority
 void Protocol::checkPriorityStateSender(char signal) {
