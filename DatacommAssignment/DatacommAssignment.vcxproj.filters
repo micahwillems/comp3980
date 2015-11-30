@@ -27,6 +27,9 @@
     <ClInclude Include="Timeout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="checksum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">

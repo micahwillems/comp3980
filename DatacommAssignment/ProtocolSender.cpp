@@ -119,7 +119,7 @@ void Protocol::sendData(char signal) {
 void Protocol::packetizeData(string message) {
 	char temp[512] = { '\0' };
 	strcpy_s(temp, message.c_str());
-	checksum *cs = new checksum();
+	Checksum *cs = new Checksum();
 	for (char a : temp)
 		cs->add(a);
 	vector<char> checksum = cs->get();

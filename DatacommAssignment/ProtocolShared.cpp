@@ -53,7 +53,7 @@ void Protocol::sendMessage(string message, bool priority = false) {
 	//Figure out why it wont append EOT
 	message = message.append("" + SOH);
 	string temp;
-	char tmp[30];
+	//char tmp[30];
 	size_t i = 0;
 	OutputDebugString("MESSAGE SEND \n");
 	priority = priority;
@@ -96,27 +96,28 @@ void Protocol::idle() {
 	while (1) {
 		if (DEBUG)
 			OutputDebugStringA("Idle");
-	PurgeComm(handle, PURGE_RXCLEAR | PURGE_TXCLEAR | PURGE_RXABORT | PURGE_TXABORT);
-	char received;
-	otherPriority = false;
-	if (DEBUG)
-		OutputDebugStringA("\nIdle ");
-	while (1) {
+		PurgeComm(handle, PURGE_RXCLEAR | PURGE_TXCLEAR | PURGE_RXABORT | PURGE_TXABORT);
+		char received;
+		otherPriority = false;
+		if (DEBUG)
+			OutputDebugStringA("\nIdle ");
+		while (1) {
 
-		if (messagesToSend.size() > 0) {
-			//enq
-			//pop
-			//GOTO confirmLine
-		}
+			if (messagesToSend.size() > 0) {
+				//enq
+				//pop
+				//GOTO confirmLine
+			}
 
-		//GOTO AcknowledgeLine	
-		if (readNextChar(1, &received, [this](char c) {
-			if (c == ENQP)
-				otherPriority = true;
-			return (c == ENQ || c == ENQP);
+			//GOTO AcknowledgeLine	
+			if (readNextChar(1, &received, [this](char c) {
+				if (c == ENQP)
+					otherPriority = true;
+				return (c == ENQ || c == ENQP);
 			})) {
-			timeoutStatus.stop();
-			acknowledgeLine();
+				timeoutStatus.stop();
+				acknowledgeLine();
+			}
 		}
 	}
 }
@@ -164,10 +165,10 @@ string Protocol::packetizePacket(string packet) {
 	return packet;
 }
 
-/*template<class UnaryPredicate>
+
 template<class UnaryPredicate>
 bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
-	char inbuff[1] { 0 };
+	char inbuff[1]{ 0 };
 	bool loop = true;
 	DWORD nBytesRead, dwEvent, dwError;
 	OVERLAPPED osStatus = { 0 };
@@ -176,18 +177,12 @@ bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
 	// generate event whenever a byte arives
 	if (!SetCommMask(handle, EV_RXCHAR)) {
 		dwError = GetLastError();
-		OutputDebugStringA("Failed to SetCommMask");
-
-	/* generate event whenever a byte arives */
-	if (!SetCommMask(handle, EV_RXCHAR)) {
-		dwError = GetLastError();
 		OutputDebugStringA("(Char)Failed to SetCommMask ");
 		return false;
 	}
 	timeoutStatus.setTimeout(timeout);
-	
-	if (!(dwEvent & EV_RXCHAR))
-		return false;
+
+	ListenForEvent:
 	if (!WaitCommEvent(handle, &dwEvent, NULL)) {
 		if (!(timeoutStatus.timeout)) {
 			OutputDebugStringA("\n(Char)Failed to WaitCommEvent");
@@ -195,7 +190,7 @@ bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
 		}
 		return false;
 	}
-	
+
 	if (!(dwEvent & EV_RXCHAR)) {
 		if (!(timeoutStatus.timeout)) {
 			OutputDebugStringA("\n(Char)Failed to read character");
@@ -210,7 +205,8 @@ bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
 				OutputDebugStringA("\nMatch");
 			*c = inbuff[0];
 			return true;
-		} else {
+		}
+		else {
 			dwError = GetLastError();
 			OutputDebugStringA("Failed UnaryPredicate Test");
 			goto ListenForEvent;
@@ -219,15 +215,6 @@ bool Protocol::readNextChar(int timeout, char * c, UnaryPredicate predicate) {
 
 	timeoutStatus.stop();
 	return false;
-}
-
-string Protocol::readNextPacket(int timeout) {
-	string packet = "";
-	char inbuff[516]{ 0 };
-	bool loop = true;
-	DWORD nBytesRead, dwEvent, dwError;
-	OVERLAPPED osStatus = { 0 };
-	DWORD timestamp = GetTickCount() + timeout;
 }
 
 bool Protocol::readNextPacket(int timeout, string& s) {
@@ -257,9 +244,7 @@ bool Protocol::readNextPacket(int timeout, string& s) {
 	for (char c : inbuff) {
 		packet = packet.append(&c);
 	}
-
-	return packet;
-	ListenForEvent:
+	
 	if (WaitCommEvent(handle, &dwEvent, NULL) == 0) {
 		if (!(timeoutStatus.timeout)) {
 			OutputDebugStringA("\n(Packet)Failed to WaitCommEvent");

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="checksum.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="Protocol.h" />
     <ClInclude Include="resource.h" />
